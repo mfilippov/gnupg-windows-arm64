@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  set-version:
+    runs-on: ubuntu-latest
+    outputs:
+      gnupg: ${{ steps.ver.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Extract GnuPG version
+      id: ver
+      run: |
+        ver=$(grep '^gnupg-' sources.lock | head -1 | cut -d'|' -f1 | sed 's/^gnupg-//;s/\.tar\.bz2$//')
+        echo "gnupg=$ver" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: [set-version]
+    runs-on: ubuntu-latest
+    env:
+      VER: ${{ needs.set-version.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Build GnuPG
+      run: |
+        set -o pipefail
+        ./build.sh 2>&1 | tee /tmp/build.log
+    - name: Stage artifact
+      run: unzip -qo dist/gnupg.zip -d dist/gnupg-staged
+    - name: Upload gnupg artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: gnupg-${{ env.VER }}_windows_arm64
+        path: dist/gnupg-staged/
+
+  build-x64:
+    needs: [set-version]
+    runs-on: ubuntu-latest
+    env:
+      VER: ${{ needs.set-version.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Build GnuPG x64
+      run: |
+        set -o pipefail
+        ./build-x64.sh 2>&1 | tee /tmp/build-x64.log
+    - name: Stage artifact
+      run: unzip -qo dist/gnupg-x64.zip -d dist/gnupg-x64-staged
+    - name: Upload gnupg x64 artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: gnupg-${{ env.VER }}_windows_x64
+        path: dist/gnupg-x64-staged/
+
+  release:
+    needs: [set-version, build, build-x64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VER: ${{ needs.set-version.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Download gnupg arm64 artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: gnupg-${{ env.VER }}_windows_arm64
+        path: dist/gnupg-staged
+    - name: Download gnupg x64 artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: gnupg-${{ env.VER }}_windows_x64
+        path: dist/gnupg-x64-staged
+    - name: Create release zips
+      run: |
+        (cd dist/gnupg-staged && zip -r "../gnupg-${VER}_windows_arm64.zip" gnupg/)
+        (cd dist/gnupg-x64-staged && zip -r "../gnupg-${VER}_windows_x64.zip" gnupg/)
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/gnupg-${{ env.VER }}_windows_arm64.zip
+          dist/gnupg-${{ env.VER }}_windows_x64.zip

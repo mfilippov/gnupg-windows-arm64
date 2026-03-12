@@ -1,0 +1,5 @@
+# Exclude downloaded/unpacked source trees and build artifacts from the Docker
+# build context. The image only needs scripts/, patches/, keys/, and *.lock files.
+build/
+dist/
+.git/
