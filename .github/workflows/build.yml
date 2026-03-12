@@ -1,0 +1,134 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+
+jobs:
+  set-version:
+    runs-on: ubuntu-latest
+    outputs:
+      gnupg: ${{ steps.ver.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Extract GnuPG version
+      id: ver
+      run: |
+        ver=$(grep '^gnupg-' sources.lock | head -1 | cut -d'|' -f1 | sed 's/^gnupg-//;s/\.tar\.bz2$//')
+        echo "gnupg=$ver" >> "$GITHUB_OUTPUT"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Install shellcheck
+      run: command -v shellcheck || { sudo apt-get update -qq && sudo apt-get install -y shellcheck; }
+    - name: Shellcheck
+      run: shellcheck --severity=warning -x *.sh tools/*.sh scripts/*.sh scripts/gnupg/*.sh scripts/pinentry-qt/*.sh
+
+  build:
+    needs: [set-version]
+    runs-on: ubuntu-latest
+    env:
+      VER: ${{ needs.set-version.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Build GnuPG
+      run: |
+        set -o pipefail
+        ./build.sh gnupg 2>&1 | tee /tmp/build.log
+    - name: Write verify summary
+      if: always()
+      run: |
+        {
+          echo '### GnuPG verify results'
+          echo '```'
+          grep -E '(===|PASS:|FAIL:)' /tmp/build.log || echo '(no verify output — build failed before verify)'
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+    - name: Stage artifact
+      if: success()
+      run: unzip -qo dist/gnupg.zip -d dist/gnupg-staged
+    - name: Upload gnupg artifact
+      if: success()
+      uses: actions/upload-artifact@v7
+      with:
+        name: gnupg-${{ env.VER }}_windows_arm64
+        path: dist/gnupg-staged/
+    - name: Upload install tree on failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: gnupg-install-failed
+        path: build/gnupg/install/
+        if-no-files-found: ignore
+
+  build-qt:
+    needs: [set-version]
+    runs-on: ubuntu-latest
+    env:
+      VER: ${{ needs.set-version.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Build pinentry-qt
+      run: |
+        set -o pipefail
+        ./build.sh pinentry-qt 2>&1 | tee /tmp/build.log
+    - name: Write verify summary
+      if: always()
+      run: |
+        {
+          echo '### pinentry-qt verify results'
+          echo '```'
+          grep -E '(===|PASS:|FAIL:)' /tmp/build.log || echo '(no verify output — build failed before verify)'
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+    - name: Stage artifact
+      if: success()
+      run: unzip -qo dist/pinentry-qt.zip -d dist/pinentry-qt-staged
+    - name: Upload pinentry-qt artifact
+      if: success()
+      uses: actions/upload-artifact@v7
+      with:
+        name: pinentry-qt-${{ env.VER }}_windows_arm64
+        path: dist/pinentry-qt-staged/
+    - name: Upload install tree on failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: pinentry-qt-install-failed
+        path: build/pinentry-qt/install/
+        if-no-files-found: ignore
+
+  bundle:
+    needs: [set-version, build, build-qt]
+    runs-on: ubuntu-latest
+    env:
+      VER: ${{ needs.set-version.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Download gnupg artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: gnupg-${{ env.VER }}_windows_arm64
+        path: dist/gnupg-staged
+    - name: Download pinentry-qt artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: pinentry-qt-${{ env.VER }}_windows_arm64
+        path: dist/pinentry-qt-staged
+    - name: Merge artifacts
+      run: |
+        mkdir -p dist/bundle
+        cp -r  dist/gnupg-staged/. dist/bundle/
+        cp -rn dist/pinentry-qt-staged/. dist/bundle/
+    - name: Upload bundle artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: gnupg-with-pinentry-qt-${{ env.VER }}_windows_arm64
+        path: dist/bundle/

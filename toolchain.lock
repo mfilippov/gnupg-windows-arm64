@@ -1,0 +1,12 @@
+# toolchain.lock — pinned llvm-mingw cross-compiler toolchain
+# Format: archive|url|sha256
+#
+# This file is COPY'd as its own Docker layer so that bumping GnuPG or other
+# source versions in sources.lock does not invalidate the cached compiler layer.
+# Update this file (and LLVM_MINGW_VERSION in Dockerfile) together when
+# upgrading the toolchain.
+#
+# SHA256 values computed from the official GitHub release assets.
+
+llvm-mingw-20260311-ucrt-ubuntu-22.04-x86_64.tar.xz|https://github.com/mstorsjo/llvm-mingw/releases/download/20260311/llvm-mingw-20260311-ucrt-ubuntu-22.04-x86_64.tar.xz|7c091479d08b13d72aa75acce0ba85cadbc7e066f340afea42849eaf5a5a6cad
+llvm-mingw-20260311-ucrt-ubuntu-22.04-aarch64.tar.xz|https://github.com/mstorsjo/llvm-mingw/releases/download/20260311/llvm-mingw-20260311-ucrt-ubuntu-22.04-aarch64.tar.xz|766a8454085539ed0b9d0843eb2cab808fc39d8d8d5601b59d57478f844a7c94

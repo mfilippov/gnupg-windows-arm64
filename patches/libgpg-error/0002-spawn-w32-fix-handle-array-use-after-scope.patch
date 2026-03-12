@@ -1,0 +1,38 @@
+From: gnupg-windows-arm
+Subject: [PATCH] spawn:w32: Fix use-after-scope of handle array passed to PROC_THREAD_ATTRIBUTE_HANDLE_LIST.
+
+* src/spawn-w32.c (_gpgrt_process_spawn): Move the hd[32] array
+declaration from inside the inner block to function scope, so that
+the array remains live when CreateProcessW is called.
+
+UpdateProcThreadAttribute stores a pointer to the caller-supplied
+handle array inside the PROC_THREAD_ATTRIBUTE_LIST.  The documentation
+states: "lpValue: A pointer to the attribute value.  This value must
+be available until the process is created."
+
+In the original code hd[32] was declared inside a { } block that ends
+before CreateProcessW is called.  Its lifetime therefore expired before
+the kernel read it back through si.lpAttributeList.  On x86-64 the
+stack slot happened to remain undisturbed, masking the bug.  On
+Windows ARM64 the compiler and/or kernel accesses the list at a
+different point, causing CreateProcessW to return
+ERROR_INVALID_PARAMETER (ec=87) and preventing gpg-agent / dirmngr
+from being auto-spawned.
+
+--- a/src/spawn-w32.c
++++ b/src/spawn-w32.c
+@@ -548,6 +548,7 @@
+   HANDLE hd_in[2];
+   HANDLE hd_out[2];
+   HANDLE hd_err[2];
++  HANDLE hd[32];
+   BOOL ask_inherit = FALSE;
+   struct gpgrt_spawn_actions act_default;
+   char *env = NULL;
+@@ -710,7 +711,6 @@
+     hd_err[1] = w32_open_null (1, enable_null_device);
+
+   {
+-    HANDLE hd[32];
+     HANDLE *hd_p = act->inherit_hds;
+     int j = 0;
