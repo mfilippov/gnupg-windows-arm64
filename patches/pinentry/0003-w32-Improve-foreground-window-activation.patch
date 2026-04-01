@@ -1,0 +1,38 @@
+From 2b89fb10959765647f98486a54e575ffce585e58 Mon Sep 17 00:00:00 2001
+From: Mikhail Filippov <mikhail@filippov.me>
+Date: Thu, 2 Apr 2026 00:40:14 +0300
+Subject: [PATCH] w32: Improve foreground window activation.
+
+* w32/main.c (dlg_proc): Replace ShowWindow with a minimize/restore
+sequence followed by SetForegroundWindow and BringWindowToTop.
+--
+
+This reliably brings the dialog to the foreground, similar to the
+raiseWindow approach used by pinentry-qt on Windows.  Implements
+the suggestion from abbecc6 to "use the hack from our Qt Pinentry"
+for reliable foreground activation.
+
+Signed-off-by: Mikhail Filippov <mikhail@filippov.me>
+---
+ w32/main.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/w32/main.c b/w32/main.c
+index f821fb5..8912f8b 100644
+--- a/w32/main.c
++++ b/w32/main.c
+@@ -359,7 +359,13 @@ dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
+ 
+       center_window (dlg, HWND_TOP);
+ 
+-      ShowWindow (dlg, SW_SHOW);
++      /* Use the minimize/restore trick to reliably bring the
++         dialog to the foreground.  Similar to the raiseWindow
++         approach used by pinentry-qt on Windows.  */
++      ShowWindow (dlg, SW_MINIMIZE);
++      ShowWindow (dlg, SW_RESTORE);
++      SetForegroundWindow (dlg);
++      BringWindowToTop (dlg);
+ 
+       break;
+ 

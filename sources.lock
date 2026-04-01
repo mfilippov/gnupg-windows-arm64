@@ -1,7 +1,7 @@
 # sources.lock — pinned source archives for the GnuPG Windows ARM64 build
 # Format: archive|url|sha256|builds|dir
 #
-#   builds  comma-separated tags: main (gnupg suite), qt (pinentry-qt)
+#   builds  comma-separated tags: main (gnupg suite)
 #   dir     target directory name after extraction
 #
 # gnupg.org packages also carry detached GPG signatures (.tar.bz2.sig).
@@ -15,14 +15,12 @@
 # before the first build.
 
 gnupg-2.5.18.tar.bz2|https://gnupg.org/ftp/gcrypt/gnupg/gnupg-2.5.18.tar.bz2|0dbd64e0322fe1a4813360d46539d5f8daf4a8fa235cf5fce464e8b0214a7e4f|main|gnupg
-libgpg-error-1.59.tar.bz2|https://gnupg.org/ftp/gcrypt/gpgrt/libgpg-error-1.59.tar.bz2|a19bc5087fd97026d93cb4b45d51638d1a25202a5e1fbc3905799f424cfa6134|main,qt|libgpg-error
+libgpg-error-1.59.tar.bz2|https://gnupg.org/ftp/gcrypt/gpgrt/libgpg-error-1.59.tar.bz2|a19bc5087fd97026d93cb4b45d51638d1a25202a5e1fbc3905799f424cfa6134|main|libgpg-error
 libgcrypt-1.12.1.tar.bz2|https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.12.1.tar.bz2|7df5c08d952ba33f9b6bdabdb06a61a78b2cf62d2122c2d1d03a91a79832aa3c|main|libgcrypt
-libassuan-3.0.2.tar.bz2|https://gnupg.org/ftp/gcrypt/libassuan/libassuan-3.0.2.tar.bz2|d2931cdad266e633510f9970e1a2f346055e351bb19f9b78912475b8074c36f6|main,qt|libassuan
+libassuan-3.0.2.tar.bz2|https://gnupg.org/ftp/gcrypt/libassuan/libassuan-3.0.2.tar.bz2|d2931cdad266e633510f9970e1a2f346055e351bb19f9b78912475b8074c36f6|main|libassuan
 libksba-1.6.8.tar.bz2|https://gnupg.org/ftp/gcrypt/libksba/libksba-1.6.8.tar.bz2|0f4510f1c7a679c3545990a31479f391ad45d84e039176309d42f80cf41743f5|main|libksba
 npth-1.8.tar.bz2|https://gnupg.org/ftp/gcrypt/npth/npth-1.8.tar.bz2|8bd24b4f23a3065d6e5b26e98aba9ce783ea4fd781069c1b35d149694e90ca3e|main|npth
-pinentry-1.3.2.tar.bz2|https://gnupg.org/ftp/gcrypt/pinentry/pinentry-1.3.2.tar.bz2|8e986ed88561b4da6e9efe0c54fa4ca8923035c99264df0b0464497c5fb94e9e|main,qt|pinentry
+pinentry-1.3.2.tar.bz2|https://gnupg.org/ftp/gcrypt/pinentry/pinentry-1.3.2.tar.bz2|8e986ed88561b4da6e9efe0c54fa4ca8923035c99264df0b0464497c5fb94e9e|main|pinentry
 ntbtls-0.3.2.tar.bz2|https://gnupg.org/ftp/gcrypt/ntbtls/ntbtls-0.3.2.tar.bz2|bdfcb99024acec9c6c4b998ad63bb3921df4cfee4a772ad6c0ca324dbbf2b07c|main|ntbtls
 sqlite-autoconf-3520000.tar.gz|https://www.sqlite.org/2026/sqlite-autoconf-3520000.tar.gz|f6b50b0c103392af32a8be15b2b9d25959de9a00a70c3979128aafeaa5338b3f|main|sqlite
 zlib-1.3.2.tar.gz|https://zlib.net/zlib-1.3.2.tar.gz|bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16|main|zlib
-qtbase-everywhere-src-6.8.3.tar.xz|https://download.qt.io/official_releases/qt/6.8/6.8.3/submodules/qtbase-everywhere-src-6.8.3.tar.xz|56001b905601bb9023d399f3ba780d7fa940f3e4861e496a7c490331f49e0b80|qt|qtbase
-qttranslations-everywhere-src-6.8.3.tar.xz|https://download.qt.io/official_releases/qt/6.8/6.8.3/submodules/qttranslations-everywhere-src-6.8.3.tar.xz|c3c61d79c3d8fe316a20b3617c64673ce5b5519b2e45535f49bee313152fa531|qt|qttranslations

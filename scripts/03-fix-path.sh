@@ -5,10 +5,9 @@ set -euxo pipefail
 pushd "$PREFIX/bin"
 
 # pinentry.exe is a symbolic link to pinentry-w32.exe, which Windows does not support.
-# Rename to pinentry-basic.exe; no pinentry.exe is shipped in the standalone gnupg.zip
-# so that the bundle target can add pinentry-qt's pinentry.exe without conflict.
+# Replace the symlink with the real binary so gpg-agent auto-discovers it.
 rm pinentry.exe
-mv pinentry-w32.exe pinentry-basic.exe
+mv pinentry-w32.exe pinentry.exe
 
 # Move libexec helpers into bin/. On Windows, gnupg_libexecdir() is hardwired
 # to return bindir (HAVE_W32_SYSTEM), so scdaemon, keyboxd, dirmngr_ldap, and

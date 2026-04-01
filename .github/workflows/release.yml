@@ -30,7 +30,7 @@ jobs:
     - name: Build GnuPG
       run: |
         set -o pipefail
-        ./build.sh gnupg 2>&1 | tee /tmp/build.log
+        ./build.sh 2>&1 | tee /tmp/build.log
     - name: Stage artifact
       run: unzip -qo dist/gnupg.zip -d dist/gnupg-staged
     - name: Upload gnupg artifact
@@ -39,28 +39,8 @@ jobs:
         name: gnupg-${{ env.VER }}_windows_arm64
         path: dist/gnupg-staged/
 
-  build-qt:
-    needs: [set-version]
-    runs-on: ubuntu-latest
-    env:
-      VER: ${{ needs.set-version.outputs.gnupg }}
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v6
-    - name: Build pinentry-qt
-      run: |
-        set -o pipefail
-        ./build.sh pinentry-qt 2>&1 | tee /tmp/build.log
-    - name: Stage artifact
-      run: unzip -qo dist/pinentry-qt.zip -d dist/pinentry-qt-staged
-    - name: Upload pinentry-qt artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: pinentry-qt-${{ env.VER }}_windows_arm64
-        path: dist/pinentry-qt-staged/
-
   release:
-    needs: [set-version, build, build-qt]
+    needs: [set-version, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -74,23 +54,11 @@ jobs:
       with:
         name: gnupg-${{ env.VER }}_windows_arm64
         path: dist/gnupg-staged
-    - name: Download pinentry-qt artifact
-      uses: actions/download-artifact@v8
-      with:
-        name: pinentry-qt-${{ env.VER }}_windows_arm64
-        path: dist/pinentry-qt-staged
-    - name: Merge and create release zips
+    - name: Create release zip
       run: |
-        mkdir -p dist/bundle
-        cp -r  dist/gnupg-staged/. dist/bundle/
-        cp -rn dist/pinentry-qt-staged/. dist/bundle/
-        (cd dist/gnupg-staged    && zip -r "../gnupg-${VER}_windows_arm64.zip" gnupg/)
-        (cd dist/pinentry-qt-staged && zip -r "../pinentry-qt-${VER}_windows_arm64.zip" gnupg/)
-        (cd dist/bundle          && zip -r "../gnupg-with-pinentry-qt-${VER}_windows_arm64.zip" gnupg/)
+        (cd dist/gnupg-staged && zip -r "../gnupg-${VER}_windows_arm64.zip" gnupg/)
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         files: |
           dist/gnupg-${{ env.VER }}_windows_arm64.zip
-          dist/pinentry-qt-${{ env.VER }}_windows_arm64.zip
-          dist/gnupg-with-pinentry-qt-${{ env.VER }}_windows_arm64.zip
