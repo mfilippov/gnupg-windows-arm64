@@ -6,8 +6,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-# shellcheck source=../common.sh
-source "$(dirname "$SCRIPT_DIR")/common.sh"
+# shellcheck source=common.sh
+source "$SCRIPT_DIR/common.sh"
 
 PASS=0
 FAIL=0
@@ -28,8 +28,7 @@ for exe in scdaemon.exe keyboxd.exe dirmngr_ldap.exe gpg-check-pattern.exe; do
 done
 
 echo "--- pinentry ---"
-check_file   "pinentry-basic.exe"        "$BIN/pinentry-basic.exe"
-check_absent "pinentry.exe absent"       "$BIN/pinentry.exe"
+check_file   "pinentry.exe"              "$BIN/pinentry.exe"
 check_absent "pinentry-w32.exe removed"  "$BIN/pinentry-w32.exe"
 check_absent "libexec/ moved away"       "$PREFIX/libexec"
 
@@ -45,7 +44,7 @@ else
 fi
 
 echo "--- PE/ARM64 architecture ---"
-for exe in gpg.exe gpg-agent.exe pinentry-basic.exe dirmngr.exe; do
+for exe in gpg.exe gpg-agent.exe pinentry.exe dirmngr.exe; do
     check_pe_arm64 "$BIN/$exe"
 done
 

@@ -11,8 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     file \
     gettext \
     gnupg \
-    qt6-tools-dev-tools \
-    libgl-dev \
     libtool \
     make \
     ninja-build \
@@ -55,6 +53,6 @@ ENV CC=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-gcc \
     AS=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-as \
     LD=${CROSS_ROOT}/bin/${CROSS_TRIPLE}-ld
 
-ENV PATH=${PATH}:${CROSS_ROOT}/bin:/usr/lib/qt6/bin
+ENV PATH=${PATH}:${CROSS_ROOT}/bin
 
 WORKDIR /work

@@ -167,6 +167,9 @@ function pinentry() {
     [[ -f "$p" ]] || continue
     patch -p1 < "$p" || patch -R -p1 --dry-run < "$p"
   done
+  # Copy binary files that cannot be represented in unified diffs
+  # (regenerated BMP logos with correct palettes for LR_LOADTRANSPARENT).
+  cp "$HOME"/patches/pinentry/w32-files/*.bmp w32/
   ./configure \
     --build="$(gcc -dumpmachine)" \
     --host=$CROSS_TRIPLE \

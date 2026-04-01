@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Download, verify, and extract source archives for the requested build tag.
 # Usage: 00-download-sources.sh <tag>
-#   tag  one of: main  qt
+#   tag  one of: main
 # Only archives whose 'builds' column contains <tag> are processed.
 
 set -euxo pipefail

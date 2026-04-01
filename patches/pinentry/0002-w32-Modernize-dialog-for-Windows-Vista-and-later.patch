@@ -1,0 +1,198 @@
+From 0d241887079ae8a526d966db1fb3a05d3ef1e153 Mon Sep 17 00:00:00 2001
+From: Mikhail Filippov <mikhail@filippov.me>
+Date: Thu, 2 Apr 2026 00:39:40 +0300
+Subject: [PATCH] w32: Modernize dialog for Windows Vista and later.
+
+* w32/app.manifest: New.  Declare Common Controls v6 dependency
+for visual styles and PerMonitorV2 DPI awareness.
+* w32/pinentry-w32.rc: Embed app.manifest.  Switch from DIALOG to
+DIALOGEX with DS_SHELLFONT.  Use Segoe UI 9pt instead of MS Sans
+Serif 10pt.  Rearrange control layout following the Microsoft
+Windows UX guidelines for spacing and sizing.
+* w32/main.c (set_bitmap): Use the smaller of width/height from
+MapDialogRect so the icon stays square.  Select the closest bitmap
+that is at least as large as the target size to prefer downscaling
+over upscaling.
+* w32/gnupg-logo.svg: New.  Vector source for the GnuPG logo,
+traced from the original artwork in Inkscape.
+* w32/logo-32.bmp, w32/logo-48.bmp, w32/logo-64.bmp,
+w32/logo-96.bmp, w32/logo-128.bmp: Regenerate as 4-bit BMPs with
+full 16-entry palettes using standard gray (192,192,192) background.
+* w32/Makefile.am (EXTRA_DIST): Add app.manifest and gnupg-logo.svg.
+(pinentry-w32.o): Depend on app.manifest.
+--
+
+The previous BMPs had truncated palettes (biClrUsed=4 with only
+4 palette entries) which caused LR_LOADTRANSPARENT to silently
+fail on Windows 10 and later.  The new BMPs use standard gray
+(192,192,192) as background which LR_LOADMAP3DCOLORS correctly
+maps to the current COLOR_3DFACE.
+
+Signed-off-by: Mikhail Filippov <mikhail@filippov.me>
+---
+ w32/Makefile.am     |   4 ++--
+ w32/app.manifest    |  27 +++++++++++++++++++++++++++
+ w32/gnupg-logo.svg  |   6 ++++++
+ w32/main.c          |  37 +++++++++++++++++++++++--------------
+ w32/pinentry-w32.rc |  23 +++++++++++++----------
+ 5 files changed, 49 insertions(+), 22 deletions(-)
+ create mode 100644 w32/app.manifest
+ create mode 100644 w32/gnupg-logo.svg
+
+diff --git a/w32/Makefile.am b/w32/Makefile.am
+index 12c66db..b8913b5 100644
+--- a/w32/Makefile.am
++++ b/w32/Makefile.am
+@@ -21,7 +21,7 @@
+ 
+ logos = logo-32.bmp logo-48.bmp logo-64.bmp logo-96.bmp logo-128.bmp
+ 
+-EXTRA_DIST = $(logos)
++EXTRA_DIST = $(logos) app.manifest gnupg-logo.svg
+ 
+ bin_PROGRAMS = pinentry-w32
+ 
+@@ -37,6 +37,6 @@ pinentry_w32_LDADD = pinentry-w32.o \
+ 	../pinentry/libpinentry.a ../secmem/libsecmem.a \
+         $(COMMON_LIBS)
+ 
+-pinentry-w32.o: pinentry-w32.rc resource.h $(logos)
++pinentry-w32.o: pinentry-w32.rc resource.h $(logos) app.manifest
+ 	$(WINDRES) -I.. -v -o $@ $<
+ 
+diff --git a/w32/app.manifest b/w32/app.manifest
+new file mode 100644
+index 0000000..1df9c45
+--- /dev/null
++++ b/w32/app.manifest
+@@ -0,0 +1,27 @@
++<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
++<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
++  <assemblyIdentity
++    version="1.0.0.0"
++    processorArchitecture="*"
++    name="Pinentry.Native"
++    type="win32"/>
++
++  <dependency>
++    <dependentAssembly>
++      <assemblyIdentity
++        type="win32"
++        name="Microsoft.Windows.Common-Controls"
++        version="6.0.0.0"
++        processorArchitecture="*"
++        publicKeyToken="6595b64144ccf1df"
++        language="*"/>
++    </dependentAssembly>
++  </dependency>
++
++  <application xmlns="urn:schemas-microsoft-com:asm.v3">
++    <windowsSettings>
++      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2,PerMonitor</dpiAwareness>
++      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true</dpiAware>
++    </windowsSettings>
++  </application>
++</assembly>
+diff --git a/w32/gnupg-logo.svg b/w32/gnupg-logo.svg
+new file mode 100644
+index 0000000..32a905e
+--- /dev/null
++++ b/w32/gnupg-logo.svg
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg xmlns="http://www.w3.org/2000/svg"
++     viewBox="0 0 135.46667 135.46667"
++     width="512" height="512">
++  <path fill="#0093dd" d="M 59.823116,0.6505142 C 33.424751,3.3209141 9.6008502,23.020126 2.6727271,48.739529 -5.0920409,74.955285 4.1821124,105.71285 26.476279,121.99397 50.510296,140.57285 87.131257,140.29225 110.57095,120.8201 130.39179,105.35661 139.47113,78.166884 133.89692,53.782548 129.04711,29.671972 110.1959,8.7825409 86.201889,2.665949 77.637514,0.34886499 68.639437,-0.28140778 59.823116,0.6505142 Z M 19.387529,102.91095 C 18.123916,93.886617 16.860304,84.862285 15.596691,75.837952 18.334517,75.628087 21.072344,75.418221 23.81017,75.208356 22.948201,60.379658 18.535893,44.20332 26.679545,30.523169 40.509034,5.4042563 78.02201,-3.9695957 100.81121,14.479783 c 12.68511,9.636418 16.33212,27.139862 12.64981,42.048487 -0.75113,6.055367 -2.39888,13.026997 -8.65507,15.655865 C 86.421565,81.109288 65.608234,81.975391 46.165542,87.330688 35.897701,90.057496 27.65418,96.608106 19.387529,102.91095 Z M 30.76004,46.876129 C 34.232961,41.700172 37.40321,34.49382 42.755298,30.026479 56.149842,17.013637 76.79832,12.241874 94.572436,17.914305 79.174613,6.3777104 56.69968,11.007477 43.436591,23.661005 36.84759,29.73856 31.985893,37.918207 30.76004,46.876129 Z M 47.186997,73.319541 C 62.701102,72.908845 78.145215,71.150681 93.631546,70.199584 94.456878,59.869371 99.030816,48.449719 92.985802,38.890097 86.300254,27.875439 70.703139,26.34686 60.18498,32.44983 51.381662,36.844762 46.02764,46.487378 46.456214,56.250707 c -0.09795,5.701396 0.696628,11.371045 0.730783,17.068834 z m 68.235033,1.259194 c -2.81354,12.784604 -5.60854,25.573985 -8.66049,38.304445 -22.670902,3.3379 -45.297033,7.03929 -67.788023,11.43435 10.546197,-7.1233 24.04929,-5.4569 35.64442,-9.75717 8.907683,-2.73318 17.438715,-6.9731 24.554199,-13.04093 -13.833165,4.1626 -27.974702,7.99067 -42.508048,8.31718 4.281175,-2.15319 11.32367,-2.0521 16.554765,-3.80334 14.650452,-3.40432 29.165607,-10.178193 38.682487,-22.202021 -10.15936,5.195687 -20.627431,10.22973 -32.107244,11.564185 -2.721155,0.696051 -13.397047,2.063515 -5.776411,-0.187622 14.891042,-4.380705 28.762985,-11.683876 41.404345,-20.629077 z"/>
++</svg>
+diff --git a/w32/main.c b/w32/main.c
+index b6243f5..f821fb5 100644
+--- a/w32/main.c
++++ b/w32/main.c
+@@ -270,20 +270,29 @@ set_bitmap (HWND dlg, int item)
+     }
+   /* fprintf (stderr, "MapDialogRect: %d/%d\n", rect.right, rect.bottom); */
+ 
+-  switch (rect.right)
+-    {
+-    case 32: resid = IDB_ICON_32; break;
+-    case 48: resid = IDB_ICON_48; break;
+-    case 64: resid = IDB_ICON_64; break;
+-    case 96: resid = IDB_ICON_96; break;
+-    default: resid = IDB_ICON_128;break;
+-    }
+-
+-  bitmap = LoadImage (GetModuleHandle (NULL),
+-                      MAKEINTRESOURCE (resid),
+-                      IMAGE_BITMAP,
+-                      rect.right, rect.bottom,
+-                      (LR_SHARED | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS));
++  /* Use the smaller dimension so the icon stays square and fits
++     the control without clipping.  Pick the closest bitmap that is
++     at least as large as the target to avoid upscaling.  */
++  {
++    long sz = rect.right < rect.bottom ? rect.right : rect.bottom;
++
++    if (sz <= 32)
++      resid = IDB_ICON_32;
++    else if (sz <= 48)
++      resid = IDB_ICON_48;
++    else if (sz <= 64)
++      resid = IDB_ICON_64;
++    else if (sz <= 96)
++      resid = IDB_ICON_96;
++    else
++      resid = IDB_ICON_128;
++
++    bitmap = LoadImage (GetModuleHandle (NULL),
++                        MAKEINTRESOURCE (resid),
++                        IMAGE_BITMAP,
++                        sz, sz,
++                        (LR_SHARED | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS));
++  }
+   if (!bitmap)
+     {
+       fprintf (stderr, "LoadImage failed: %s\n",  w32_strerror (-1));
+diff --git a/w32/pinentry-w32.rc b/w32/pinentry-w32.rc
+index a54bf3a..67e7a7f 100755
+--- a/w32/pinentry-w32.rc
++++ b/w32/pinentry-w32.rc
+@@ -21,6 +21,8 @@
+ #include <windows.h>
+ #include "resource.h"
+ 
++CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "app.manifest"
++
+ /*
+  * Main dialog
+  */
+@@ -31,18 +33,19 @@ IDB_ICON_64    BITMAP   DISCARDABLE   "logo-64.bmp"
+ IDB_ICON_96    BITMAP   DISCARDABLE   "logo-96.bmp"
+ IDB_ICON_128   BITMAP   DISCARDABLE   "logo-128.bmp"
+ 
+-IDD_PINENT DIALOG DISCARDABLE  0, 0, 230, 125
+-STYLE DS_MODALFRAME | DS_SYSMODAL | WS_POPUP | WS_CAPTION | WS_SYSMENU
++IDD_PINENT DIALOGEX 0, 0, 260, 115
++STYLE DS_SETFONT | DS_SHELLFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
++EXSTYLE WS_EX_DLGMODALFRAME
+ CAPTION "Pinentry"
+-FONT 10, "MS Sans Serif"
++FONT 9, "Segoe UI"
+ BEGIN
+     CONTROL         "", IDC_PINENT_ICON,
+                     "Static", SS_BITMAP|SS_CENTERIMAGE,
+-                                           5,  5,  32, 32
+-    LTEXT           "", IDC_PINENT_DESC,  45,  5, 180, 65
+-    RTEXT           "", IDC_PINENT_PROMPT, 5, 75,  60, 12
+-    EDITTEXT        IDC_PINENT_TEXT,      70, 75, 155, 12, ES_PASSWORD | ES_AUTOHSCROLL
+-    CTEXT           "", IDC_PINENT_ERR,    5, 90, 220, 12
+-    DEFPUSHBUTTON   "O&K", IDOK,          50, 105, 85, 14
+-    PUSHBUTTON      "&Cancel", IDCANCEL, 140, 105, 85, 14
++                                           7,  7,  32, 32
++    LTEXT           "", IDC_PINENT_DESC,  46,  7, 207, 42
++    RTEXT           "", IDC_PINENT_PROMPT, 7, 59,  55,  8
++    EDITTEXT        IDC_PINENT_TEXT,      65, 56, 188, 14, ES_PASSWORD | ES_AUTOHSCROLL
++    CTEXT           "", IDC_PINENT_ERR,    7, 77, 246, 10
++    DEFPUSHBUTTON   "O&K", IDOK,          99, 94,  75, 14
++    PUSHBUTTON      "&Cancel", IDCANCEL, 178, 94,  75, 14
+ END
