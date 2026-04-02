@@ -25,6 +25,8 @@ rm -f \
     gpg-error-config \
     gpg-pair-tool.exe \
     gpg-protect-tool.exe \
+    gpgme-config \
+    gpgme-tool.exe \
     gpgrt-config \
     gpgscm.exe \
     hmac256.exe \
@@ -46,7 +48,7 @@ popd
 # lib/: rename .dll.a → .imp to match official installer, remove internal-only libs
 pushd "$PREFIX/lib"
 # Rename public import libs to .imp (official installer convention)
-for lib in libassuan libgcrypt libgpg-error libksba libnpth; do
+for lib in libassuan libgcrypt libgpg-error libgpgme libksba libnpth; do
     mv "${lib}.dll.a" "${lib}.imp"
 done
 # Remove internal-only and build-only files
@@ -55,6 +57,7 @@ rm -f \
     libsqlite3.dll.a \
     libz.dll.a libz.def libz.a \
     libassuan.def \
+    gpgme.def \
     libgcrypt.def \
     libgpg-error.def \
     libksba.def \

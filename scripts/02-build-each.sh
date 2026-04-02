@@ -208,6 +208,30 @@ function gnupg() {
   popd
 }
 
+function gpgme() {
+  pushd gpgme
+  # Apply local patches (patches/gpgme/ is component-specific)
+  for p in "$HOME"/patches/gpgme/*.patch; do
+    [[ -f "$p" ]] || continue
+    patch -p1 < "$p" || patch -R -p1 --dry-run < "$p"
+  done
+  ./configure \
+    --build="$(gcc -dumpmachine)" \
+    --host=$CROSS_TRIPLE \
+    --prefix="$PREFIX" \
+    --disable-static \
+    --with-libgpg-error-prefix="$PREFIX" \
+    --with-libassuan-prefix="$PREFIX" \
+    --enable-languages=
+  # Build and install only the library and docs; the tests/ subdirectory
+  # tries to import GPG test keys via gpg-agent, which cannot start
+  # inside the cross-compilation container.
+  make -j"$(nproc)" -C src
+  make -C src install
+  make -C doc install
+  popd
+}
+
 libgpg-error
 zlib
 libgcrypt
@@ -218,3 +242,4 @@ sqlite
 ntbtls
 pinentry
 gnupg
+gpgme

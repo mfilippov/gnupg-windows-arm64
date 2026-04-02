@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: build <build@localhost>
+Subject: [PATCH] w32spawn: Fix GetProcAddress function pointer cast
+
+Clang (llvm-mingw) rejects implicit conversion from FARPROC to a
+typed function pointer.  Add an explicit cast.
+
+---
+ src/gpgme-w32spawn.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/src/gpgme-w32spawn.c
++++ b/src/gpgme-w32spawn.c
+@@ -249,7 +249,7 @@
+           handle = LoadLibraryA ("user32.dll");
+           if (handle)
+             {
+-              func = GetProcAddress (handle, "AllowSetForegroundWindow");
++              func = (BOOL (WINAPI *)(DWORD))GetProcAddress (handle, "AllowSetForegroundWindow");
+               if (!func)
+                 FreeLibrary (handle);
+             }

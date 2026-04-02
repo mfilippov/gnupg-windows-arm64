@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: build <build@localhost>
+Subject: [PATCH] Fix assuan callback type mismatches for Clang
+
+Clang (llvm-mingw) treats incompatible function pointer types as
+errors.  On Windows, assuan_pid_t is unsigned long long while pid_t
+is signed long long, and assuan_fd_t is void* while some callbacks
+declared int.  Align the callback signatures with what
+struct assuan_system_hooks expects.
+
+---
+ src/assuan-support.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+--- a/src/assuan-support.c
++++ b/src/assuan-support.c
+@@ -181,7 +181,7 @@
+    to reflect the value of the FD in the peer process (on
+    Windows).  */
+ static int
+-my_spawn (assuan_context_t ctx, pid_t *r_pid, const char *name,
++my_spawn (assuan_context_t ctx, assuan_pid_t *r_pid, const char *name,
+ 	  const char **argv,
+ 	  assuan_fd_t fd_in, assuan_fd_t fd_out,
+ 	  assuan_fd_t *fd_child_list,
+@@ -288,7 +288,7 @@
+     {
+       err = _gpgme_io_spawn (name, (char*const*)argv,
+                              (IOSPAWN_FLAG_NOCLOSE | IOSPAWN_FLAG_DETACHED),
+-                             fd_items, atfork, atforkvalue, r_pid);
++                             fd_items, atfork, atforkvalue, (pid_t *)r_pid);
+     }
+   if (!err)
+     {
+@@ -309,8 +309,8 @@
+
+
+ /* If action is 0, like waitpid.  If action is 1, just release the PID?  */
+-static pid_t
+-my_waitpid (assuan_context_t ctx, pid_t pid,
++static assuan_pid_t
++my_waitpid (assuan_context_t ctx, assuan_pid_t pid,
+ 	    int nowait, int *status, int options)
+ {
+   (void)ctx;
+@@ -324,7 +324,7 @@
+      NOWAIT in POSIX systems just means the caller already did the
+      waitpid for this child.  */
+   if (! nowait)
+-    return waitpid (pid, status, options);
++    return (assuan_pid_t)waitpid ((pid_t)pid, status, options);
+ #endif
+   return 0;
+ }
+@@ -351,20 +351,20 @@
+ }
+
+
+-static int
++static assuan_fd_t
+ my_socket (assuan_context_t ctx, int namespace, int style, int protocol)
+ {
+   (void)ctx;
+-  return _gpgme_io_socket (namespace, style, protocol);
++  return (assuan_fd_t)(intptr_t)_gpgme_io_socket (namespace, style, protocol);
+ }
+
+
+ static int
+-my_connect (assuan_context_t ctx, int sock, struct sockaddr *addr,
++my_connect (assuan_context_t ctx, assuan_fd_t sock, struct sockaddr *addr,
+ 	    socklen_t length)
+ {
+   (void)ctx;
+-  return _gpgme_io_connect (sock, addr, length);
++  return _gpgme_io_connect ((int)(intptr_t)sock, addr, length);
+ }
