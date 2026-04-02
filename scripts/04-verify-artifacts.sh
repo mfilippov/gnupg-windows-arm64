@@ -32,6 +32,15 @@ check_file   "pinentry.exe"              "$BIN/pinentry.exe"
 check_absent "pinentry-w32.exe removed"  "$BIN/pinentry-w32.exe"
 check_absent "libexec/ moved away"       "$PREFIX/libexec"
 
+echo "--- GPGME ---"
+if ls "$BIN"/libgpgme-*.dll &>/dev/null 2>&1; then
+    _pass "libgpgme-*.dll"
+else
+    _fail "libgpgme-*.dll — no match in $BIN"
+fi
+check_file "gpgme-w32spawn.exe" "$BIN/gpgme-w32spawn.exe"
+check_file "gpgme-json.exe"     "$BIN/gpgme-json.exe"
+
 echo "--- Required DLLs ---"
 for dll in libgpg-error-0.dll libgcrypt-20.dll libksba-8.dll \
            libnpth-0.dll libntbtls-0.dll libsqlite3-0.dll zlib1.dll; do
