@@ -3,23 +3,34 @@
 # Source this file; do not execute it directly.
 
 # ---------------------------------------------------------------------------
-# Docker sudo detection
+# Container runtime detection (Docker / Podman)
 # ---------------------------------------------------------------------------
 
-# Sets SUDO to "sudo" when Docker requires it, empty string otherwise.
-# On macOS Docker is always accessible without sudo.
-# On Linux, sudo is skipped when the current user can already reach the socket
-# (rootless Docker, devcontainer, most CI runners).
+# Sets CONTAINER_RT to the container runtime command ("docker" or "podman")
+# and SUDO to "sudo" when required (Linux + Docker without rootless access).
+CONTAINER_RT=
 SUDO=
-detect_sudo() {
-    # SUDO is a global used by callers as a command prefix (e.g. $SUDO docker …)
+detect_container_runtime() {
     # shellcheck disable=SC2034
     SUDO=
-    if [[ "$(uname)" == "Linux" ]] && ! docker info &>/dev/null; then
+    if command -v docker &>/dev/null; then
         # shellcheck disable=SC2034
-        SUDO=sudo
+        CONTAINER_RT=docker
+        if [[ "$(uname)" == "Linux" ]] && ! docker info &>/dev/null; then
+            # shellcheck disable=SC2034
+            SUDO=sudo
+        fi
+    elif command -v podman &>/dev/null; then
+        # shellcheck disable=SC2034
+        CONTAINER_RT=podman
+    else
+        echo "ERROR: neither docker nor podman found in PATH" >&2
+        return 1
     fi
 }
+
+# Legacy alias — existing callers use detect_sudo + $SUDO docker …
+detect_sudo() { detect_container_runtime; }
 
 # ---------------------------------------------------------------------------
 # Source verification helpers (used by download scripts on the host)
@@ -120,5 +131,17 @@ check_pe_arm64() {
         _pass "PE/ARM64 $name"
     else
         _fail "PE/ARM64 $name — got: $info"
+    fi
+}
+
+check_pe_x64() {
+    local path="$1"
+    local name; name="$(basename "$path")"
+    if [[ ! -f "$path" ]]; then _fail "PE/x86-64 $name — file not found"; return; fi
+    local info; info="$(file "$path")"
+    if echo "$info" | grep -qi "x86-64"; then
+        _pass "PE/x86-64 $name"
+    else
+        _fail "PE/x86-64 $name — got: $info"
     fi
 }

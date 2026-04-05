@@ -26,7 +26,7 @@ jobs:
     - name: Install shellcheck
       run: command -v shellcheck || { sudo apt-get update -qq && sudo apt-get install -y shellcheck; }
     - name: Shellcheck
-      run: shellcheck --severity=warning -x *.sh tools/*.sh scripts/*.sh
+      run: shellcheck --severity=warning -x *.sh tools/*.sh scripts/*.sh scripts/x64/*.sh
 
   build:
     needs: [set-version]
@@ -64,4 +64,42 @@ jobs:
       with:
         name: gnupg-install-failed
         path: build/gnupg/install/
+        if-no-files-found: ignore
+
+  build-x64:
+    needs: [set-version]
+    runs-on: ubuntu-latest
+    env:
+      VER: ${{ needs.set-version.outputs.gnupg }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+    - name: Build GnuPG x64
+      run: |
+        set -o pipefail
+        ./build-x64.sh 2>&1 | tee /tmp/build-x64.log
+    - name: Write verify summary
+      if: always()
+      run: |
+        {
+          echo '### GnuPG x64 verify results'
+          echo '```'
+          grep -E '(===|PASS:|FAIL:)' /tmp/build-x64.log || echo '(no verify output — build failed before verify)'
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+    - name: Stage artifact
+      if: success()
+      run: unzip -qo dist/gnupg-x64.zip -d dist/gnupg-x64-staged
+    - name: Upload gnupg x64 artifact
+      if: success()
+      uses: actions/upload-artifact@v7
+      with:
+        name: gnupg-${{ env.VER }}_windows_x64
+        path: dist/gnupg-x64-staged/
+    - name: Upload install tree on failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: gnupg-x64-install-failed
+        path: build/x64/install/
         if-no-files-found: ignore

@@ -1,0 +1,35 @@
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    autoconf \
+    automake \
+    bash \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    file \
+    gettext \
+    gnupg \
+    libtool \
+    make \
+    mingw-w64 \
+    patch \
+    pkg-config \
+    python3 \
+    texinfo \
+    wget \
+    unzip \
+    xz-utils \
+    zip \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CROSS_TRIPLE=x86_64-w64-mingw32
+
+ENV CC=${CROSS_TRIPLE}-gcc \
+    CXX=${CROSS_TRIPLE}-g++ \
+    AR=${CROSS_TRIPLE}-ar \
+    AS=${CROSS_TRIPLE}-as \
+    LD=${CROSS_TRIPLE}-ld
+
+WORKDIR /work
