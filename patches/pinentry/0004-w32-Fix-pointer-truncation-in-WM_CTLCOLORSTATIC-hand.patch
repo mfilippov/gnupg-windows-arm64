@@ -1,0 +1,33 @@
+From feb15c0dff5d334e6204c1c3dd8308ea2798df68 Mon Sep 17 00:00:00 2001
+From: Mikhail Filippov <mikhail@filippov.me>
+Date: Sun, 26 Apr 2026 22:48:25 +0200
+Subject: [PATCH 4/4] w32: Fix pointer truncation in WM_CTLCOLORSTATIC handler.
+
+* w32/main.c (dlg_proc): Cast GetStockObject return value to
+INT_PTR instead of BOOL.
+--
+
+The dialog procedure returns INT_PTR which is 64 bits on Win64.
+Casting HGDIOBJ through BOOL truncates the upper 32 bits.
+
+Signed-off-by: Mikhail Filippov <mikhail@filippov.me>
+---
+ w32/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/w32/main.c b/w32/main.c
+index 8912f8b..8477700 100644
+--- a/w32/main.c
++++ b/w32/main.c
+@@ -404,7 +404,7 @@ dlg_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
+           /* Display the error prompt in red.  */
+           SetTextColor ((HDC)wparam, RGB (255, 0, 0));
+           SetBkMode ((HDC)wparam, TRANSPARENT);
+-          return (BOOL)GetStockObject (NULL_BRUSH);
++          return (INT_PTR)GetStockObject (NULL_BRUSH);
+         }
+       break;
+ 
+-- 
+2.54.0.windows.1
+

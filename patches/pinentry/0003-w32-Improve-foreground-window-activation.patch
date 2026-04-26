@@ -1,7 +1,7 @@
-From 2b89fb10959765647f98486a54e575ffce585e58 Mon Sep 17 00:00:00 2001
+From f64e05622a1c61915b4e255aa09822c1a8edb5b4 Mon Sep 17 00:00:00 2001
 From: Mikhail Filippov <mikhail@filippov.me>
 Date: Thu, 2 Apr 2026 00:40:14 +0300
-Subject: [PATCH] w32: Improve foreground window activation.
+Subject: [PATCH 3/4] w32: Improve foreground window activation.
 
 * w32/main.c (dlg_proc): Replace ShowWindow with a minimize/restore
 sequence followed by SetForegroundWindow and BringWindowToTop.
@@ -36,3 +36,6 @@ index f821fb5..8912f8b 100644
  
        break;
  
+-- 
+2.54.0.windows.1
+

@@ -1,78 +1,93 @@
-From: mfilippov
-Subject: [PATCH] secmem: Add VirtualLock support for Windows
+From f77f609f11555e2fca5f83bdc315c3c27595543e Mon Sep 17 00:00:00 2001
+From: Mikhail Filippov <mikhail@filippov.me>
+Date: Wed, 1 Apr 2026 13:26:25 +0300
+Subject: [PATCH 1/4] secmem: Add VirtualLock support for Windows.
 
-Use VirtualAlloc and VirtualLock for secure memory pool on Windows.
+---
+ secmem/secmem.c | 35 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
 
 diff --git a/secmem/secmem.c b/secmem/secmem.c
+index f32a83e..6a886af 100644
 --- a/secmem/secmem.c
 +++ b/secmem/secmem.c
 @@ -31,6 +31,10 @@
+ # include <sys/types.h>
+ # include <fcntl.h>
  #endif
- #include <string.h>
-
-+#ifdef HAVE_W32_SYSTEM
-+# include <windows.h>
++#if HAVE_W32_SYSTEM
++#include <windows.h>
 +#endif
 +
+ #include <string.h>
+ 
  #include "secmem.h"
-
- #ifdef ORIGINAL_GPG_VERSION
-@@ -100,6 +104,9 @@ static void  *pool;
- static volatile int pool_okay; /* may be checked in an atexit function */
+@@ -102,6 +106,9 @@ static volatile int pool_okay; /* may be checked in an atexit function */
  #if HAVE_MMAP
  static int   pool_is_mmapped;
-+#endif
-+#ifdef HAVE_W32_SYSTEM
-+static int pool_is_virtualalloc;
  #endif
++#if HAVE_W32_SYSTEM
++static int pool_is_virtualalloc;
++#endif
  static size_t poolsize; /* allocated length */
  static size_t poollen;	/* used length */
-@@ -159,6 +166,12 @@ lock_pool( void *p, size_t n )
+ static MEMBLOCK *unused_blocks;
+@@ -158,7 +165,12 @@ lock_pool( void *p, size_t n )
+ 	    log_error("can't lock memory: %s\n", strerror(errno));
  	show_warning = 1;
      }
-
--#else
-+#elif defined(HAVE_W32_SYSTEM)
-+    if (!VirtualLock (p, n))
-+      {
-+	log_error ("can't lock memory: %lu\n", GetLastError ());
-+	show_warning = 1;
-+      }
-+#else
+-
++#elif HAVE_W32_SYSTEM
++	if( !VirtualLock( p, n ) ) {
++		log_error("can't lock memory: VirtualLock failed, (error %lu)\n",
++			GetLastError());
++		show_warning = 1;
++	}
+ #else
      (void)p;
      (void)n;
-     log_info("Please note that you don't have secure memory on this system\n");
-@@ -211,7 +224,17 @@ init_pool( size_t n)
- 	pool_is_mmapped = 1;
+@@ -172,6 +184,9 @@ init_pool( size_t n)
+ {
+ #if HAVE_MMAP
+     size_t pgsize;
++#elif HAVE_W32_SYSTEM
++	size_t pgsize;
++	SYSTEM_INFO si;
+ #endif
+ 
+     poolsize = n;
+@@ -213,6 +228,19 @@ init_pool( size_t n)
  	pool_okay = 1;
      }
-
--#endif
-+#elif defined(HAVE_W32_SYSTEM)
-+    pool = VirtualAlloc (NULL, poolsize, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-+    if (!pool)
-+      log_info ("can't VirtualAlloc pool of %u bytes - using malloc\n",
-+		(unsigned)poolsize);
-+    else
-+      {
-+	pool_is_virtualalloc = 1;
-+	pool_okay = 1;
-+      }
-+
-+#endif
+ 
++#elif HAVE_W32_SYSTEM
++	GetSystemInfo(&si);
++	pgsize = si.dwPageSize;
++	poolsize = (poolsize + pgsize -1 ) & ~(pgsize - 1);
++	pool = VirtualAlloc(NULL, poolsize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
++	if( !pool ) {
++		log_info("can't VirtualAlloc memory pool of %u bytes: %lu - using malloc\n",
++			(unsigned)poolsize, GetLastError());
++	}
++	else {
++		pool_is_virtualalloc = 1;
++		pool_okay = 1;
++	}
+ #endif
      if( !pool_okay ) {
  	pool = malloc( poolsize );
- 	if( !pool )
-@@ -413,6 +440,12 @@ secmem_term(void)
+@@ -413,6 +441,11 @@ secmem_term(void)
  #if HAVE_MMAP
      if( pool_is_mmapped )
  	munmap( pool, poolsize );
-+#elif defined(HAVE_W32_SYSTEM)
-+    if (pool_is_virtualalloc)
-+      {
-+	VirtualUnlock (pool, poolsize);
-+	VirtualFree (pool, 0, MEM_RELEASE);
-+      }
++#elif HAVE_W32_SYSTEM
++	if( pool_is_virtualalloc ) {
++		VirtualUnlock( pool, poolsize );
++		VirtualFree( pool, 0, MEM_RELEASE );
++	}
  #endif
      pool = NULL;
      pool_okay = 0;
+-- 
+2.54.0.windows.1
+
