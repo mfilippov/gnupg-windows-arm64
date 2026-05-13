@@ -192,6 +192,11 @@ function pinentry() {
 
 function gnupg() {
   pushd gnupg
+  # Apply local patches (patches/gnupg/ is component-specific)
+  for p in "$HOME"/patches/gnupg/*.patch; do
+    [[ -f "$p" ]] || continue
+    patch -p1 < "$p" || patch -R -p1 --dry-run < "$p"
+  done
   ./configure \
     --build="$(gcc -dumpmachine)" \
     --host=$CROSS_TRIPLE \
