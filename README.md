@@ -31,9 +31,10 @@ Inspired by [imkiva/gnupg-windows-arm](https://github.com/imkiva/gnupg-windows-a
 
 ## Usage
 
-Requires Docker. On Linux, `sudo` is used automatically only when the current
-user cannot reach the Docker socket directly (so CI runners and devcontainers
-with rootless Docker work without sudo).
+Requires Docker or Podman. On Linux, `sudo` is used automatically only when the
+current user cannot reach the Docker socket directly (so CI runners and
+devcontainers with rootless Docker work without sudo). Where SELinux is
+enforcing, the build volume is mounted with `:z` so the container can read it.
 
 ```bash
 ./build.sh

@@ -6,10 +6,12 @@
 # Container runtime detection (Docker / Podman)
 # ---------------------------------------------------------------------------
 
-# Sets CONTAINER_RT to the container runtime command ("docker" or "podman")
-# and SUDO to "sudo" when required (Linux + Docker without rootless access).
+# Sets CONTAINER_RT to the container runtime command ("docker" or "podman"),
+# SUDO to "sudo" when required (Linux + Docker without rootless access), and
+# MOUNT_SUFFIX to ":z" on SELinux hosts (see below).
 CONTAINER_RT=
 SUDO=
+MOUNT_SUFFIX=
 detect_container_runtime() {
     # shellcheck disable=SC2034
     SUDO=
@@ -26,6 +28,19 @@ detect_container_runtime() {
     else
         echo "ERROR: neither docker nor podman found in PATH" >&2
         return 1
+    fi
+
+    # On SELinux hosts (Fedora et al.) a bind-mounted source tree keeps its
+    # user_home_t label, which the container process may not read -- the build
+    # then dies with "Permission denied" on /work/scripts/*.sh. ":z" makes the
+    # runtime relabel the volume as shared container content. Harmless where
+    # SELinux is absent, but only pass it when it is actually enforcing so that
+    # macOS/Windows and plain-Linux hosts see the mount spec they had before.
+    # shellcheck disable=SC2034
+    MOUNT_SUFFIX=
+    if command -v selinuxenabled &>/dev/null && selinuxenabled &>/dev/null; then
+        # shellcheck disable=SC2034
+        MOUNT_SUFFIX=:z
     fi
 }
 
@@ -84,12 +99,19 @@ download_verify() {
 }
 
 # Extract an archive, choosing the right tar flags from the file extension.
+#
+# --no-same-owner: extraction runs as root inside the container, where tar
+# otherwise restores the numeric uid/gid recorded in the tarball (the release
+# maintainer's, e.g. 1000 for gnupg and 999 for gpgme). On a rootless Podman
+# bind mount those land on the host as subuids the invoking user cannot touch,
+# so the next build.sh run dies clearing the old source trees. Owning the files
+# as the extracting user keeps them removable from the host.
 tar_extract() {
     local archive="$1"
     case "$archive" in
-        *.tar.bz2) tar jxf "$archive" ;;
-        *.tar.gz)  tar zxf "$archive" ;;
-        *.tar.xz)  tar Jxf "$archive" ;;
+        *.tar.bz2) tar --no-same-owner -jxf "$archive" ;;
+        *.tar.gz)  tar --no-same-owner -zxf "$archive" ;;
+        *.tar.xz)  tar --no-same-owner -Jxf "$archive" ;;
         *) echo "ERROR: unknown archive format: $archive" >&2; return 1 ;;
     esac
 }

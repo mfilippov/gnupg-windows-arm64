@@ -49,7 +49,7 @@ _user_flag=()
 if [[ "$CONTAINER_RT" == "docker" ]]; then
     _user_flag=(--user "$(id -u):$(id -g)")
 fi
-MSYS_NO_PATHCONV=1 $SUDO $CONTAINER_RT run --rm -v "$BUILD":/work "${_user_flag[@]}" "$IMAGE" \
+MSYS_NO_PATHCONV=1 $SUDO $CONTAINER_RT run --rm -v "$BUILD":/work"$MOUNT_SUFFIX" "${_user_flag[@]}" "$IMAGE" \
     bash /work/scripts/x64/01-build-in-cross-env.sh
 
 # DONE — archive was created inside the container.
