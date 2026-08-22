@@ -18,6 +18,14 @@ jobs:
       run: |
         ver=$(grep '^gnupg-' sources.lock | head -1 | cut -d'|' -f1 | sed 's/^gnupg-//;s/\.tar\.bz2$//')
         echo "gnupg=$ver" >> "$GITHUB_OUTPUT"
+    - name: Check tag against sources.lock
+      env:
+        VER: ${{ steps.ver.outputs.gnupg }}
+      run: |
+        if [[ "$GITHUB_REF_NAME" != "v$VER" ]]; then
+          echo "::error::tag $GITHUB_REF_NAME does not match GnuPG $VER in sources.lock (expected v$VER)"
+          exit 1
+        fi
 
   build:
     needs: [set-version]
@@ -83,9 +91,20 @@ jobs:
       run: |
         (cd dist/gnupg-staged && zip -r "../gnupg-${VER}_windows_arm64.zip" gnupg/)
         (cd dist/gnupg-x64-staged && zip -r "../gnupg-${VER}_windows_x64.zip" gnupg/)
+    - name: Checksum release zips
+      run: |
+        cd dist
+        sha256sum "gnupg-${VER}_windows_arm64.zip" \
+                  "gnupg-${VER}_windows_x64.zip" > SHA256SUMS
+        cat SHA256SUMS
+    - name: Render release notes
+      run: ./tools/release-notes.sh > dist/notes.md
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
+        name: GnuPG ${{ env.VER }} for Windows
+        body_path: dist/notes.md
         files: |
           dist/gnupg-${{ env.VER }}_windows_arm64.zip
           dist/gnupg-${{ env.VER }}_windows_x64.zip
+          dist/SHA256SUMS

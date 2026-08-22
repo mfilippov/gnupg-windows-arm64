@@ -80,6 +80,24 @@ Patches retired upstream (no longer carried here):
 | `sources.lock` | Pinned source URLs and SHA256 checksums |
 | `keys/gnupg-release.asc` | GnuPG release signing keys (used to verify gnupg.org downloads) |
 | `tools/update-checksums.sh` | Recompute and update SHA256 entries in `sources.lock` |
+| `tools/release-notes.sh` | Render the GitHub release body from the pinned versions |
+
+## Releases
+
+Releases are cut by pushing a tag named after the GnuPG version in
+`sources.lock` — `v2.5.21` for GnuPG 2.5.21:
+
+```bash
+git tag v2.5.21
+git push origin v2.5.21
+```
+
+`.github/workflows/release.yml` then builds both targets, and publishes
+`gnupg-<version>_windows_arm64.zip`, `gnupg-<version>_windows_x64.zip` and a
+`SHA256SUMS` file, with release notes rendered by `tools/release-notes.sh` from
+`sources.lock` and `toolchain.lock`. A tag that disagrees with `sources.lock`
+fails the run before either build starts, so bump the versions first and tag
+the commit that carries them.
 
 ## See Also
 
