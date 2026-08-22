@@ -158,7 +158,6 @@ function pinentry() {
     [[ -f "$p" ]] || continue
     patch -p1 < "$p" || patch -R -p1 --dry-run < "$p"
   done
-  cp "$HOME"/patches/pinentry/w32-files/*.bmp w32/
   ./configure \
     --build="$(gcc -dumpmachine)" \
     --host=$CROSS_TRIPLE \

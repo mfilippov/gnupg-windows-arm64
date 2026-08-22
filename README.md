@@ -17,16 +17,17 @@ Inspired by [imkiva/gnupg-windows-arm](https://github.com/imkiva/gnupg-windows-a
 
 | Component | Version |
 |---|---|
-| GnuPG | 2.5.19 |
-| libgpg-error | 1.60 |
+| GnuPG | 2.5.21 |
+| libgpg-error | 1.61 |
 | libgcrypt | 1.12.2 |
 | libassuan | 3.0.2 |
-| libksba | 1.6.8 |
+| libksba | 1.8.0 |
 | npth | 1.8 |
-| pinentry | 1.3.2 |
+| pinentry | 1.3.3 |
 | ntbtls | 0.3.2 |
-| SQLite | 3.52.0 |
+| SQLite | 3.53.4 |
 | zlib | 1.3.2 |
+| GPGME | 2.1.2 |
 
 ## Usage
 
@@ -41,25 +42,27 @@ with rootless Docker work without sudo).
 
 ## Patches
 
-[`patches/libgpg-error/0001-spawn-w32-fix-handle-array-use-after-scope.patch`](patches/libgpg-error/0001-spawn-w32-fix-handle-array-use-after-scope.patch)
-— moves the `hd[32]` handle array from an inner block to function scope in
-`spawn-w32.c` so it remains live when `CreateProcessW` reads back the
-`PROC_THREAD_ATTRIBUTE_HANDLE_LIST`. Fixes `ERROR_INVALID_PARAMETER` (ec=87)
-that prevented gpg-agent / dirmngr from being auto-spawned on Windows ARM64.
-
 [`patches/pinentry/0001-secmem-Add-VirtualLock-support-for-Windows.patch`](patches/pinentry/0001-secmem-Add-VirtualLock-support-for-Windows.patch)
 ([upstream D622](https://dev.gnupg.org/D622)) — replaces the no-op `mlock()`
 stub on Windows with `VirtualAlloc` + `VirtualLock` so the secure memory pool
 is actually locked out of swap, matching the behaviour on Unix.
 
-[`patches/pinentry/0002-w32-Modernize-dialog-for-Windows-Vista-and-later.patch`](patches/pinentry/0002-w32-Modernize-dialog-for-Windows-Vista-and-later.patch)
-— embeds a Common Controls v6 manifest for visual styles, enables PerMonitorV2
-DPI awareness, switches to DIALOGEX with Segoe UI 9pt, and regenerates logo
-BMPs with correct palettes so `LR_LOADTRANSPARENT` works on Windows 10+.
-
 [`patches/pinentry/0003-w32-Improve-foreground-window-activation.patch`](patches/pinentry/0003-w32-Improve-foreground-window-activation.patch)
 — uses a minimize/restore trick followed by `SetForegroundWindow` and
 `BringWindowToTop` to reliably bring the pinentry dialog to the foreground.
+
+[`patches/pinentry/0004-w32-Fix-pointer-truncation-in-WM_CTLCOLORSTATIC-hand.patch`](patches/pinentry/0004-w32-Fix-pointer-truncation-in-WM_CTLCOLORSTATIC-hand.patch)
+— returns the brush handle through `INT_PTR` instead of a truncating `int`,
+which is required on 64-bit Windows (including ARM64).
+
+Patches retired upstream (no longer carried here):
+
+| Patch | Landed in |
+|---|---|
+| gnupg `scd:openpgp` CHV1 retry counter byte index | GnuPG 2.5.21 |
+| pinentry w32 dialog modernization (visual styles, DPI, DIALOGEX) | pinentry 1.3.3 |
+| pinentry `w32/logo-*.bmp` with `LR_LOADTRANSPARENT`-safe palettes | pinentry 1.3.3 |
+| GPGME assuan-support / w32spawn function pointer types | GPGME 2.1.x |
 
 ## Script overview
 

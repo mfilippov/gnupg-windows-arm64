@@ -8,5 +8,5 @@
 #
 # SHA256 values computed from the official GitHub release assets.
 
-llvm-mingw-20260311-ucrt-ubuntu-22.04-x86_64.tar.xz|https://github.com/mstorsjo/llvm-mingw/releases/download/20260311/llvm-mingw-20260311-ucrt-ubuntu-22.04-x86_64.tar.xz|7c091479d08b13d72aa75acce0ba85cadbc7e066f340afea42849eaf5a5a6cad
-llvm-mingw-20260311-ucrt-ubuntu-22.04-aarch64.tar.xz|https://github.com/mstorsjo/llvm-mingw/releases/download/20260311/llvm-mingw-20260311-ucrt-ubuntu-22.04-aarch64.tar.xz|766a8454085539ed0b9d0843eb2cab808fc39d8d8d5601b59d57478f844a7c94
+llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz|https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz|534b92e067b22a6b4441f48ae9240a3341b17825d04d577eab0cf85c44b4deda
+llvm-mingw-20260616-ucrt-ubuntu-22.04-aarch64.tar.xz|https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-ubuntu-22.04-aarch64.tar.xz|e7e5d135d93d3f2a3beaaea633a5b0e66ac75391a53feae654391913dd76102b
