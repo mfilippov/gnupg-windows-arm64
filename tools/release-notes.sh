@@ -69,7 +69,7 @@ if [[ -z "$gnupg_version" ]]; then
     exit 1
 fi
 
-# toolchain.lock entries look like llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz
+# toolchain.lock entries look like llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
 llvm_version=$(awk -F'|' '/^llvm-mingw-/ {print $1; exit}' "$REPO_DIR/toolchain.lock" \
                | sed 's/^llvm-mingw-//; s/-ucrt.*//')
 
