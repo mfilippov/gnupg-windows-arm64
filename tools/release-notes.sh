@@ -94,6 +94,10 @@ Extract anywhere; both archives unpack to a self-contained \`gnupg/\` directory.
 Verify a download against the attached checksum file with
 \`sha256sum --ignore-missing -c SHA256SUMS\`.
 
+Every \`.exe\` and \`.dll\` is Authenticode-signed by Mikhail Filippov. The
+archives and the signed binaries have GitHub build provenance:
+\`gh attestation verify gnupg-${gnupg_version}_windows_arm64.zip --repo mfilippov/gnupg-windows-arm64\`
+
 ## Component versions
 
 | Component | Version |

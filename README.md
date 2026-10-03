@@ -99,6 +99,15 @@ git push origin v2.5.21
 fails the run before either build starts, so bump the versions first and tag
 the commit that carries them.
 
+Every `.exe` and `.dll` in the archives is Authenticode-signed with a key on a
+YubiKey, through [github-codesign](https://github.com/mfilippov/github-codesign):
+the build jobs attest the unsigned binaries, the `sign` job (environment
+`codesign`, runner `codesign`) waits until the request is approved on the
+signing host with `sudo -u signer sign-pending`, and the release job checks
+that the signed files are the attested build plus a valid signature before it
+puts them into the archives. Approve the `codesign` deployment on the run page,
+then the request on the host; the run waits up to an hour.
+
 ## See Also
 
 - https://github.com/imkiva/gnupg-windows-arm — original inspiration

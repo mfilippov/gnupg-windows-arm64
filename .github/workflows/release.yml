@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: read
+
 jobs:
   set-version:
     runs-on: ubuntu-latest
@@ -30,6 +33,12 @@ jobs:
   build:
     needs: [set-version]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write      # build provenance (Sigstore)
+      attestations: write
+    outputs:
+      tree: ${{ steps.tree.outputs.sha256 }}
     env:
       VER: ${{ needs.set-version.outputs.gnupg }}
     steps:
@@ -41,15 +50,46 @@ jobs:
         ./build.sh 2>&1 | tee /tmp/build.log
     - name: Stage artifact
       run: unzip -qo dist/gnupg.zip -d dist/gnupg-staged
+    # The codesign job could overwrite any artifact of this run; the release job checks the
+    # tree it downloads against this hash, which only this job can set.
+    - name: Hash staged tree
+      id: tree
+      run: |
+        cd dist/gnupg-staged
+        echo "sha256=$(find gnupg -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+    - name: Collect PE files for signing
+      run: |
+        cd dist/gnupg-staged
+        mkdir -p ../unsigned/arm64
+        find gnupg -type f \( -iname '*.exe' -o -iname '*.dll' \) -exec cp --parents -t ../unsigned/arm64 {} +
+    # sign-pending refuses to sign a file without this provenance (built by this workflow,
+    # at this tag and commit, on a GitHub-hosted runner).
+    - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: |
+          dist/unsigned/arm64/gnupg/**/*.exe
+          dist/unsigned/arm64/gnupg/**/*.dll
     - name: Upload gnupg artifact
       uses: actions/upload-artifact@v7
       with:
         name: gnupg-${{ env.VER }}_windows_arm64
         path: dist/gnupg-staged/
+    - name: Upload unsigned PE files
+      uses: actions/upload-artifact@v7
+      with:
+        name: unsigned-arm64
+        path: dist/unsigned/
+        if-no-files-found: error
 
   build-x64:
     needs: [set-version]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    outputs:
+      tree: ${{ steps.tree.outputs.sha256 }}
     env:
       VER: ${{ needs.set-version.outputs.gnupg }}
     steps:
@@ -61,17 +101,71 @@ jobs:
         ./build-x64.sh 2>&1 | tee /tmp/build-x64.log
     - name: Stage artifact
       run: unzip -qo dist/gnupg-x64.zip -d dist/gnupg-x64-staged
+    - name: Hash staged tree
+      id: tree
+      run: |
+        cd dist/gnupg-x64-staged
+        echo "sha256=$(find gnupg -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+    - name: Collect PE files for signing
+      run: |
+        cd dist/gnupg-x64-staged
+        mkdir -p ../unsigned/x64
+        find gnupg -type f \( -iname '*.exe' -o -iname '*.dll' \) -exec cp --parents -t ../unsigned/x64 {} +
+    - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: |
+          dist/unsigned/x64/gnupg/**/*.exe
+          dist/unsigned/x64/gnupg/**/*.dll
     - name: Upload gnupg x64 artifact
       uses: actions/upload-artifact@v7
       with:
         name: gnupg-${{ env.VER }}_windows_x64
         path: dist/gnupg-x64-staged/
+    - name: Upload unsigned PE files
+      uses: actions/upload-artifact@v7
+      with:
+        name: unsigned-x64
+        path: dist/unsigned/
+        if-no-files-found: error
+
+  # One artifact → one signing request → one PIN for both architectures (56 files; sign-pending
+  # takes at most 64 per request).
+  merge:
+    needs: [build, build-x64]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/upload-artifact/merge@v7
+      with:
+        name: unsigned
+        pattern: unsigned-*
+        delete-merged: true
+
+  # Runs on the codesign runner on the signing host (mfilippov/github-codesign): submits a
+  # signing request and waits until it is approved with sign-pending.
+  sign:
+    needs: merge
+    runs-on: codesign
+    # Required reviewer + only v* tags; the job does not reach the runner before approval.
+    environment: codesign
+    timeout-minutes: 60
+    steps:
+    - id: sign
+      uses: mfilippov/github-codesign/request-signature@98ec2e5e857ac09ea96f652b3f50c1cf624046a3 # v1.0.2
+      with:
+        artifact: unsigned
+    - uses: actions/upload-artifact@v7
+      with:
+        name: signed
+        path: ${{ steps.sign.outputs.dir }}
+        if-no-files-found: error
 
   release:
-    needs: [set-version, build, build-x64]
+    needs: [set-version, build, build-x64, sign]
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     env:
       VER: ${{ needs.set-version.outputs.gnupg }}
     steps:
@@ -87,6 +181,44 @@ jobs:
       with:
         name: gnupg-${{ env.VER }}_windows_x64
         path: dist/gnupg-x64-staged
+    - name: Download signed PE files
+      uses: actions/download-artifact@v8
+      with:
+        name: signed
+        path: dist/signed
+    - name: Download unsigned PE files
+      uses: actions/download-artifact@v8
+      with:
+        name: unsigned
+        path: dist/unsigned
+    # The signed files came back through the self-hosted runner: prove they are the attested
+    # GitHub-hosted build plus a valid signature by the pinned certificate.
+    - uses: mfilippov/github-codesign/verify-signed@98ec2e5e857ac09ea96f652b3f50c1cf624046a3 # v1.0.2
+      with:
+        signed: dist/signed
+        unsigned: dist/unsigned
+    - name: Replace PE files with signed ones
+      env:
+        TREE_ARM64: ${{ needs.build.outputs.tree }}
+        TREE_X64: ${{ needs.build-x64.outputs.tree }}
+      run: |
+        overlay() {
+          local arch=$1 staged=$2 want=$3 got
+          got=$(cd "$staged" && find gnupg -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+          if [[ "$got" != "$want" ]]; then
+            echo "::error::$arch tree differs from the one the build job produced"
+            exit 1
+          fi
+          # Every PE file in the release must have come back signed.
+          if ! diff <(cd "$staged" && find gnupg -type f \( -iname '*.exe' -o -iname '*.dll' \) | sort) \
+                    <(cd "dist/signed/$arch" && find gnupg -type f | sort); then
+            echo "::error::$arch: signed files do not cover the PE files of the tree"
+            exit 1
+          fi
+          cp -r "dist/signed/$arch/gnupg" "$staged/"
+        }
+        overlay arm64 dist/gnupg-staged "$TREE_ARM64"
+        overlay x64 dist/gnupg-x64-staged "$TREE_X64"
     - name: Create release zips
       run: |
         (cd dist/gnupg-staged && zip -r "../gnupg-${VER}_windows_arm64.zip" gnupg/)
@@ -97,6 +229,15 @@ jobs:
         sha256sum "gnupg-${VER}_windows_arm64.zip" \
                   "gnupg-${VER}_windows_x64.zip" > SHA256SUMS
         cat SHA256SUMS
+    # Provenance for the released files, so users can run
+    # `gh attestation verify <file> --repo mfilippov/gnupg-windows-arm64`.
+    - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      with:
+        subject-path: |
+          dist/gnupg-${{ env.VER }}_windows_arm64.zip
+          dist/gnupg-${{ env.VER }}_windows_x64.zip
+          dist/signed/**/*.exe
+          dist/signed/**/*.dll
     - name: Render release notes
       run: ./tools/release-notes.sh > dist/notes.md
     - name: Create GitHub Release
