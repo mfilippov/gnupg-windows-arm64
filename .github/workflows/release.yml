@@ -25,8 +25,10 @@ jobs:
       env:
         VER: ${{ steps.ver.outputs.gnupg }}
       run: |
-        if [[ "$GITHUB_REF_NAME" != "v$VER" ]]; then
-          echo "::error::tag $GITHUB_REF_NAME does not match GnuPG $VER in sources.lock (expected v$VER)"
+        # v<version>-test.<n> exercises the whole pipeline, signing included; delete its draft.
+        n=${GITHUB_REF_NAME#"v$VER-test."}
+        if [[ "$GITHUB_REF_NAME" != "v$VER" && ( "$n" == "$GITHUB_REF_NAME" || ! "$n" =~ ^[0-9]+$ ) ]]; then
+          echo "::error::tag $GITHUB_REF_NAME does not match GnuPG $VER in sources.lock (expected v$VER or v$VER-test.<n>)"
           exit 1
         fi
 
