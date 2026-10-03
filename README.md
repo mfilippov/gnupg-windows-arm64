@@ -92,12 +92,16 @@ git tag v2.5.21
 git push origin v2.5.21
 ```
 
-`.github/workflows/release.yml` then builds both targets, and publishes
-`gnupg-<version>_windows_arm64.zip`, `gnupg-<version>_windows_x64.zip` and a
-`SHA256SUMS` file, with release notes rendered by `tools/release-notes.sh` from
-`sources.lock` and `toolchain.lock`. A tag that disagrees with `sources.lock`
-fails the run before either build starts, so bump the versions first and tag
-the commit that carries them.
+`.github/workflows/release.yml` then builds both targets, and creates a draft
+release with `gnupg-<version>_windows_arm64.zip`,
+`gnupg-<version>_windows_x64.zip` and a `SHA256SUMS` file, with release notes
+rendered by `tools/release-notes.sh` from `sources.lock` and `toolchain.lock`.
+Check the draft and publish it by hand. A tag that disagrees with
+`sources.lock` fails the run before either build starts, so bump the versions
+first and tag the commit that carries them.
+
+Releases are immutable once published, and the "release tags" ruleset lets only
+admins create, move or delete `v*` tags, so a version can be released once.
 
 Every `.exe` and `.dll` in the archives is Authenticode-signed with a key on a
 YubiKey, through [github-codesign](https://github.com/mfilippov/github-codesign):
