@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   set-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       gnupg: ${{ steps.ver.outputs.gnupg }}
     steps:
@@ -34,7 +34,7 @@ jobs:
 
   build:
     needs: [set-version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       id-token: write      # build provenance (Sigstore)
@@ -85,7 +85,7 @@ jobs:
 
   build-x64:
     needs: [set-version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       id-token: write
@@ -134,7 +134,7 @@ jobs:
   # takes at most 64 per request).
   merge:
     needs: [build, build-x64]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
     - uses: actions/upload-artifact/merge@v7
       with:
@@ -163,7 +163,7 @@ jobs:
 
   release:
     needs: [set-version, build, build-x64, sign]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
       id-token: write

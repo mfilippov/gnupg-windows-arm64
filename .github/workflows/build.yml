@@ -6,7 +6,7 @@ on:
 
 jobs:
   set-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     outputs:
       gnupg: ${{ steps.ver.outputs.gnupg }}
     steps:
@@ -19,7 +19,7 @@ jobs:
         echo "gnupg=$ver" >> "$GITHUB_OUTPUT"
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
     - name: Checkout
       uses: actions/checkout@v6
@@ -30,7 +30,7 @@ jobs:
 
   build:
     needs: [set-version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       VER: ${{ needs.set-version.outputs.gnupg }}
     steps:
@@ -68,7 +68,7 @@ jobs:
 
   build-x64:
     needs: [set-version]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       VER: ${{ needs.set-version.outputs.gnupg }}
     steps:
