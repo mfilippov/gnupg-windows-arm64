@@ -4,7 +4,7 @@
 #
 # Usage:
 #   ./tools/release-notes.sh              # print the notes
-#   ./tools/release-notes.sh > notes.md   # capture for action-gh-release
+#   ./tools/release-notes.sh > notes.md   # capture for gh release create
 
 set -euo pipefail
 
