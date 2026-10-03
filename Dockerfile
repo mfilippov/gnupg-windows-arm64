@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV CROSS_TRIPLE=aarch64-w64-mingw32
 ENV CROSS_ROOT=/usr/xcc/${CROSS_TRIPLE}-cross
-ARG LLVM_MINGW_VERSION=20260616
+ARG LLVM_MINGW_VERSION=20260922
 
 COPY toolchain.lock /tmp/toolchain.lock
 RUN set -e; \

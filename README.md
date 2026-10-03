@@ -17,17 +17,17 @@ Inspired by [imkiva/gnupg-windows-arm](https://github.com/imkiva/gnupg-windows-a
 
 | Component | Version |
 |---|---|
-| GnuPG | 2.5.21 |
+| GnuPG | 2.5.24 |
 | libgpg-error | 1.61 |
-| libgcrypt | 1.12.2 |
+| libgcrypt | 1.12.4 |
 | libassuan | 3.0.2 |
-| libksba | 1.8.0 |
+| libksba | 1.8.1 |
 | npth | 1.8 |
 | pinentry | 1.3.3 |
 | ntbtls | 0.3.2 |
 | SQLite | 3.53.4 |
 | zlib | 1.3.2 |
-| GPGME | 2.1.2 |
+| GPGME | 2.2.0 |
 
 ## Usage
 
@@ -85,11 +85,11 @@ Patches retired upstream (no longer carried here):
 ## Releases
 
 Releases are cut by pushing a tag named after the GnuPG version in
-`sources.lock` — `v2.5.21` for GnuPG 2.5.21:
+`sources.lock` — `v2.5.24` for GnuPG 2.5.24:
 
 ```bash
-git tag v2.5.21
-git push origin v2.5.21
+git tag v2.5.24
+git push origin v2.5.24
 ```
 
 `.github/workflows/release.yml` then builds both targets, and creates a draft
