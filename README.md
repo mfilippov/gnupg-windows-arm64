@@ -21,13 +21,13 @@ Inspired by [imkiva/gnupg-windows-arm](https://github.com/imkiva/gnupg-windows-a
 | libgpg-error | 1.61 |
 | libgcrypt | 1.12.4 |
 | libassuan | 3.0.2 |
-| libksba | 1.8.1 |
+| libksba | 1.9.1 |
 | npth | 1.8 |
 | pinentry | 1.3.3 |
 | ntbtls | 0.3.2 |
-| SQLite | 3.53.4 |
-| zlib | 1.3.2 |
-| GPGME | 2.2.0 |
+| SQLite | 3.54.1 |
+| zlib | 1.4 |
+| GPGME | 2.3.1 |
 
 ## Usage
 

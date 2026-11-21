@@ -18,10 +18,10 @@ gnupg-2.5.24.tar.bz2|https://gnupg.org/ftp/gcrypt/gnupg/gnupg-2.5.24.tar.bz2|bf1
 libgpg-error-1.61.tar.bz2|https://gnupg.org/ftp/gcrypt/gpgrt/libgpg-error-1.61.tar.bz2|7a85413f2bc354f4f8aa832b718af122e48965e9e0eb9012ee659c13c6385c93|main|libgpg-error
 libgcrypt-1.12.4.tar.bz2|https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.12.4.tar.bz2|d77f68f48879510e79a2f65977ccc68981781ea0923e5bdffac2a193ea3d660e|main|libgcrypt
 libassuan-3.0.2.tar.bz2|https://gnupg.org/ftp/gcrypt/libassuan/libassuan-3.0.2.tar.bz2|d2931cdad266e633510f9970e1a2f346055e351bb19f9b78912475b8074c36f6|main|libassuan
-libksba-1.8.1.tar.bz2|https://gnupg.org/ftp/gcrypt/libksba/libksba-1.8.1.tar.bz2|c2f84393011827219ae117131dba8e7684c2bed0961eed11b0642c2acba440b5|main|libksba
+libksba-1.9.1.tar.bz2|https://gnupg.org/ftp/gcrypt/libksba/libksba-1.9.1.tar.bz2|9afdd398b4a076735e1e7fd29c7f6e7670b6c382aee2d3a55aa937b283f43e5b|main|libksba
 npth-1.8.tar.bz2|https://gnupg.org/ftp/gcrypt/npth/npth-1.8.tar.bz2|8bd24b4f23a3065d6e5b26e98aba9ce783ea4fd781069c1b35d149694e90ca3e|main|npth
 pinentry-1.3.3.tar.bz2|https://gnupg.org/ftp/gcrypt/pinentry/pinentry-1.3.3.tar.bz2|c2970f16d6afb66ecddfca767d743936c86239bff936eed7fd7597a678414b63|main|pinentry
 ntbtls-0.3.2.tar.bz2|https://gnupg.org/ftp/gcrypt/ntbtls/ntbtls-0.3.2.tar.bz2|bdfcb99024acec9c6c4b998ad63bb3921df4cfee4a772ad6c0ca324dbbf2b07c|main|ntbtls
-sqlite-autoconf-3530400.tar.gz|https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz|0e9483900e92cd5de8fd48d16bf9200145a61f7fd5be542a5ac81d8a9516eb9c|main|sqlite
-zlib-1.3.2.tar.gz|https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz|bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16|main|zlib
-gpgme-2.2.0.tar.bz2|https://gnupg.org/ftp/gcrypt/gpgme/gpgme-2.2.0.tar.bz2|7160e80e84dafd00d956c84891c533bb7ab16a6a54fbe1574b2f3acf0496977b|main|gpgme
+sqlite-autoconf-3540100.tar.gz|https://www.sqlite.org/2026/sqlite-autoconf-3540100.tar.gz|926ef8d3eab93fbf6e06011901273eec076b25594a4e1cdadd50c987f4f6d64e|main|sqlite
+zlib-1.4.tar.gz|https://github.com/madler/zlib/releases/download/v1.4/zlib-1.4.tar.gz|02dd159783677a749c04adbdd02b55b8a2bcc7e054f51b76b549199a916ad584|main|zlib
+gpgme-2.3.1.tar.bz2|https://gnupg.org/ftp/gcrypt/gpgme/gpgme-2.3.1.tar.bz2|2bf94e0e677e5a8fc31f79dd323f91c5416b36fb851058bc1e8bce39f2642434|main|gpgme
