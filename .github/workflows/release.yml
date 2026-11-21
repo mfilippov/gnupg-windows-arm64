@@ -25,12 +25,18 @@ jobs:
       env:
         VER: ${{ steps.ver.outputs.gnupg }}
       run: |
+        # v<version>-r<n> releases a new bundle without changing GnuPG itself.
         # v<version>-test.<n> exercises the whole pipeline, signing included; delete its draft.
-        n=${GITHUB_REF_NAME#"v$VER-test."}
-        if [[ "$GITHUB_REF_NAME" != "v$VER" && ( "$n" == "$GITHUB_REF_NAME" || ! "$n" =~ ^[0-9]+$ ) ]]; then
-          echo "::error::tag $GITHUB_REF_NAME does not match GnuPG $VER in sources.lock (expected v$VER or v$VER-test.<n>)"
-          exit 1
+        base="v$VER"
+        revision=${GITHUB_REF_NAME#"$base-r"}
+        test_number=${GITHUB_REF_NAME#"$base-test."}
+        if [[ "$GITHUB_REF_NAME" == "$base" ]] ||
+           [[ "$revision" != "$GITHUB_REF_NAME" && "$revision" =~ ^[1-9][0-9]*$ ]] ||
+           [[ "$test_number" != "$GITHUB_REF_NAME" && "$test_number" =~ ^[0-9]+$ ]]; then
+          exit 0
         fi
+        echo "::error::tag $GITHUB_REF_NAME does not match GnuPG $VER in sources.lock (expected $base, $base-r<n> or $base-test.<n>)"
+        exit 1
 
   build:
     needs: [set-version]
@@ -248,8 +254,12 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
+        title="GnuPG ${VER} for Windows"
+        if [[ "$GITHUB_REF_NAME" == "v$VER-r"* ]]; then
+          title+=" (revision ${GITHUB_REF_NAME#"v$VER-r"})"
+        fi
         gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft \
-          --title "GnuPG ${VER} for Windows" --notes-file dist/notes.md \
+          --title "$title" --notes-file dist/notes.md \
           "dist/gnupg-${VER}_windows_arm64.zip" \
           "dist/gnupg-${VER}_windows_x64.zip" \
           dist/SHA256SUMS
